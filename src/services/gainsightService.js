@@ -81,3 +81,18 @@ export const registerGainsightUser = async (newUser) => {
     throw error;
   }
 }
+
+export const fetchGainsightPointsByUserIds = async (userIds) => {
+  try {
+    const gainsightClient  = await initializeClient();
+    const response = await gainsightClient.get('/points', {
+      params: {
+        userId: userIds
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Gainsight services:', error.response?.data || error.message);
+    throw error;
+  }
+}

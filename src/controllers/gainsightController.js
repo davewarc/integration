@@ -10,7 +10,7 @@ export const gainsightAuthentication = async (req, res) => {
     const accessToken = await gainsightService.fetchGainsightAuth();
     res.status(200).json({
       status: 'success',
-      access_token: accessToken
+      access_token: accessToken,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -27,7 +27,7 @@ export const fetchGainsightUsers = async (req, res) => {
     const users = await gainsightService.fetchGainsightUsers();
     res.status(200).json({
       status: 'success',
-      users
+      users,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -46,7 +46,7 @@ export const fetchGainsightUserById = async (req, res) => {
 
     res.status(200).json({
       status: 'success',
-      user
+      user,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -64,7 +64,25 @@ export const registerGainsightUser = async (req, res) => {
     const registerUser = await gainsightService.registerGainsightUser(requestData);
     res.status(200).json({
       status: 'success',
-      user: registerUser
+      user: registerUser,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+/**
+ * @description Get Points By UserId
+ * @param {Request} req
+ * @param {Response} res
+ */
+export const fetchGainsightPointsByUserIds = async (req, res) => {
+  const { userIds } = req.body;
+  try {
+    const allPointsByUser = await gainsightService.fetchGainsightPointsByUserIds(userIds);
+    res.status(200).json({
+      status: 'success',
+      points: allPointsByUser,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
