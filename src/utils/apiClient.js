@@ -46,6 +46,7 @@ export const createApiClient = (apiUrl, apiKey) => {
   instance.getData = async (url, params) => {
     try {
       const response = await instance.get(url, { params });
+      console.log(response);
       return response.data; // Return the response data
     } catch (error) {
       console.error('Error in GET request:', error.response?.data || error.message);
