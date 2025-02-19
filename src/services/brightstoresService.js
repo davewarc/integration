@@ -1,6 +1,5 @@
 import { createApiClient } from '../utils/apiClient.js';
 import config from '../config/config.js';
-import axios from 'axios';
 
 const brightstoresClient = createApiClient(
   config.brightstores.apiUrl,
@@ -14,7 +13,19 @@ export const getBrightstoreUsers = async () => {
     const response = await brightstoresClient.get(`/users?token=${brightstoresApiKey}`);
     return response.data;
   } catch (error) {
-    console.error('Error from Brightstores:', error.response?.data || error.message);
+    console.error('Error of getting all users in Brightstores:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+export const updateBrightstoreUsers = async (userId, points) => {
+  try {
+    const response = await brightstoresClient.put(`/users/${userId}?token=${brightstoresApiKey}`, {
+      balance: points,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error of updating all users in Brightstores:', error.response?.data || error.message);
     throw error;
   }
 }

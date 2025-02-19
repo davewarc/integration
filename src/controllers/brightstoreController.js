@@ -12,3 +12,18 @@ export const getBrightstoreUsers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 }
+
+export const updateBrightstoreUsers = async (req, res) => {
+  const { id } = req.params;
+  const { points } = req.body;
+  try {
+    const user = await brightstoreService.updateBrightstoreUsers(id, points);
+
+    res.status(200).json({
+      status: 'success',
+      user
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
