@@ -23,8 +23,10 @@ export const gainsightAuthentication = async (req, res) => {
  * @param {Response} res 
  */
 export const fetchGainsightUsers = async (req, res) => {
+  const { page, pageSize } = req.params;
+
   try {
-    const users = await gainsightService.fetchGainsightUsers();
+    const users = await gainsightService.fetchGainsightUsers(page, pageSize);
     res.status(200).json({
       status: 'success',
       users,
@@ -51,7 +53,6 @@ export const fetchUserByFieldValue = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
-
   }
 }
 

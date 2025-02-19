@@ -1,8 +1,9 @@
 import * as brightstoreService from '../services/brightstoresService.js';
 
 export const getBrightstoreUsers = async (req, res) => {
+  const { page, perPage } = req.params;
   try {
-    const users = await brightstoreService.getBrightstoreUsers();
+    const users = await brightstoreService.getBrightstoreUsers(page, perPage);
 
     res.status(200).json({
       status: 'success',

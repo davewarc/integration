@@ -44,10 +44,10 @@ export const fetchGainsightAuth = async () => {
  * @module Users
  * @returns Get all users
  */
-export const fetchGainsightUsers = async () => {
+export const fetchGainsightUsers = async (page, pageSize) => {
   try {
     const gainsightClient = await initializeClient();
-    const response = await gainsightClient.get('/user?pageSize=100000');
+    const response = await gainsightClient.get(`/user?page=${page}&pageSize=${pageSize}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching Gainsight services:', error.response?.data || error.message);

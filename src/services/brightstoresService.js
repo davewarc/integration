@@ -8,9 +8,9 @@ const brightstoresClient = createApiClient(
 
 const brightstoresApiKey = config.brightstores.apiKey;
 
-export const getBrightstoreUsers = async () => {
+export const getBrightstoreUsers = async (page, perPage) => {
   try {
-    const response = await brightstoresClient.get(`/users?token=${brightstoresApiKey}`);
+    const response = await brightstoresClient.get(`/users?token=${brightstoresApiKey}&page=${page}&per_page=${perPage}`);
     return response.data;
   } catch (error) {
     console.error('Error of getting all users in Brightstores:', error.response?.data || error.message);
