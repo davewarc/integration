@@ -6,6 +6,7 @@ import {
   fetchGainsightUserById,
   registerGainsightUser,
   fetchGainsightPointsByUserIds,
+  fetchUserByFieldValue,
 } from '../controllers/gainsightController.js';
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.post('/auth', gainsightAuthentication);
 
 router.get('/users', fetchGainsightUsers);
 router.get('/users/:id', fetchGainsightUserById);
+router.get('/users/:field/:value', fetchUserByFieldValue);
 router.post('/users/register', registerGainsightUser);
 
 router.post('/points', fetchGainsightPointsByUserIds);

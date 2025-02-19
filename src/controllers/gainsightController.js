@@ -35,6 +35,27 @@ export const fetchGainsightUsers = async (req, res) => {
 }
 
 /**
+ * @description Get User By Field and Value
+ * @param {Request} req 
+ * @param {Response} res 
+ */
+
+export const fetchUserByFieldValue = async (req, res) => {
+  const { field, value } = req.params;
+  try {
+    const user = await gainsightService.fetchUserByFieldValue(field, value);
+
+    res.status(200).json({
+      status: 'success',
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+
+  }
+}
+
+/**
  * @description Get User By ID Controller
  * @param {Request} req 
  * @param {Response} res 

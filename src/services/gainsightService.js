@@ -46,8 +46,23 @@ export const fetchGainsightAuth = async () => {
  */
 export const fetchGainsightUsers = async () => {
   try {
-    const gainsightClient  = await initializeClient();
-    const response = await gainsightClient.get('/user');
+    const gainsightClient = await initializeClient();
+    const response = await gainsightClient.get('/user?pageSize=100000');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Gainsight services:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/**
+ * @module Users
+ * @return Get a User
+ */
+export const fetchUserByFieldValue = async (field, value) => {
+  try {
+    const gainsightClient = await initializeClient();
+    const response = await gainsightClient.get(`/user/${field}/${value}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching Gainsight services:', error.response?.data || error.message);
@@ -62,7 +77,7 @@ export const fetchGainsightUsers = async () => {
  */
 export const fetchGainsightUserById = async (userId) => {
   try {
-    const gainsightClient  = await initializeClient();
+    const gainsightClient = await initializeClient();
     const response = await gainsightClient.get(`/user/${userId}`);
     return response.data;
   } catch (error) {
@@ -73,7 +88,7 @@ export const fetchGainsightUserById = async (userId) => {
 
 export const registerGainsightUser = async (newUser) => {
   try {
-    const gainsightClient  = await initializeClient();
+    const gainsightClient = await initializeClient();
     const response = await gainsightClient.post('/user/register', newUser);
     return response.data;
   } catch (error) {
@@ -84,7 +99,7 @@ export const registerGainsightUser = async (newUser) => {
 
 export const fetchGainsightPointsByUserIds = async (userIds) => {
   try {
-    const gainsightClient  = await initializeClient();
+    const gainsightClient = await initializeClient();
     const response = await gainsightClient.get('/points', {
       params: {
         userId: userIds
