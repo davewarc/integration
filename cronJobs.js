@@ -13,14 +13,15 @@ const syncGainsightPointsToBrightstores = async () => {
     while (hasMorePages) {
       // Step 1: Fetch Brightstores users (paginate)
       const brightstoreUsers = await brightstoreService.getBrightstoreUsers(page, perPage);
-      if (!brightstoreUsers || brightstoreUsers.length === 0) {
+      if (!brightstoreUsers?.users || brightstoreUsers?.users?.length === 0) {
         console.log(`No users found on page ${page}. Ending job.`);
         break;
       }
 
-      console.log(`Processing ${brightstoreUsers.length} users from Brightstores page ${page}...`);
+      console.log(`Processing ${brightstoreUsers?.users?.length} users from Brightstores page ${page}...`);
 
-      for (const brightUser of brightstoreUsers) {
+      const { users } = brightstoreUsers;
+      for (const brightUser of users) {
         const { email, id: brightstoreUserId } = brightUser;
 
         try {
@@ -33,7 +34,7 @@ const syncGainsightPointsToBrightstores = async () => {
           }
 
           // Step 3: Fetch Gainsight user's points
-          const gainsightPoints = await gainsightService.fetchGainsightPointsByUserIds([gainsightUser.id]);
+          const gainsightPoints = await gainsightService.fetchGainsightPointsByUserIds([gainsightUser.userid]);
 
           if (!gainsightPoints || gainsightPoints.length === 0) {
             console.warn(`No points found for Gainsight user with email: ${email}`);
@@ -63,5 +64,6 @@ const syncGainsightPointsToBrightstores = async () => {
 
 // Schedule the cron job to run every Friday at midnight
 cron.schedule('0 0 * * 5', syncGainsightPointsToBrightstores);
+// cron.schedule('*/10 * * * *', syncGainsightPointsToBrightstores);
 
 export default syncGainsightPointsToBrightstores;
