@@ -18,6 +18,16 @@ export const getBrightstoreUsers = async (page, perPage) => {
   }
 }
 
+export const createBrightstoreUsers = async (data) => {
+  try {
+    const response = await brightstoresClient.post(`/users?token=${brightstoresApiKey}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error of getting all users in Brightstores:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 export const updateBrightstoreUsers = async (userId, points) => {
   try {
     const response = await brightstoresClient.put(`/users/${userId}?token=${brightstoresApiKey}`, {
