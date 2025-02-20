@@ -62,8 +62,54 @@ const syncGainsightPointsToBrightstores = async () => {
   }
 };
 
+const registerMissingUsers = async () => {
+  console.log('Starting registration of missing Gainsight users in Brightstores...');
+
+  try {
+    let page = 1;
+    const perPage = 50;
+    let hasMorePages = true;
+
+    while (hasMorePages) {
+      // Fetch Gainsight users
+      const gainsightUsers = await gainsightService.fetchGainsightUsers(page, perPage);
+      if (!gainsightUsers || gainsightUsers.length === 0) break;
+
+      console.log(`Checking ${gainsightUsers.length} Gainsight users from page ${page}...`);
+
+      for (const gainsightUser of gainsightUsers) {
+        try {
+          console.log(`Registering new Brightstores user: ${gainsightUser.email}`);
+
+          const newBrightstoresUser = {
+            user: {
+              username: gainsightUser.username,
+              email: gainsightUser.email,
+              active: true,
+            }
+          };
+
+          await brightstoreService.createBrightstoreUsers(newBrightstoresUser);
+          console.log(`Successfully registered ${gainsightUser.email} in Brightstores.`);
+        } catch (error) {
+          console.error(`Error checking/registering user ${gainsightUser.email}:`, error.message);
+        }
+      }
+
+      page++;
+    }
+
+    console.log('Registration job completed.');
+  } catch (error) {
+    console.error('Error in user registration job:', error.message);
+  }
+};
+
 // Schedule the cron job to run every Friday at midnight
 cron.schedule('0 0 * * 5', syncGainsightPointsToBrightstores);
 // cron.schedule('*/10 * * * *', syncGainsightPointsToBrightstores);
 
-export default syncGainsightPointsToBrightstores;
+export {
+  syncGainsightPointsToBrightstores,
+  registerMissingUsers
+};
