@@ -109,8 +109,14 @@ const registerMissingUsers = async () => {
 };
 
 // Schedule the cron job to run every Friday at midnight
-cron.schedule('0/5 * * * *', registerMissingUsers);
-cron.schedule('0/15 * * * *', syncGainsightPointsToBrightstores);
+cron.schedule('0 0 * * 5', () => {
+  console.log('Cron job is running for missing users')
+  registerMissingUsers();
+});
+cron.schedule('0 3 * * 5', () => {
+  console.log('Cron job is running for sync the points of users')
+  syncGainsightPointsToBrightstores();
+});
 
 export {
   syncGainsightPointsToBrightstores,
