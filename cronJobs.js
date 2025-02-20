@@ -73,11 +73,14 @@ const registerMissingUsers = async () => {
     while (hasMorePages) {
       // Fetch Gainsight users
       const gainsightUsers = await gainsightService.fetchGainsightUsers(page, perPage);
-      if (!gainsightUsers || gainsightUsers.length === 0) break;
+      const users = Object.assign({}, gainsightUsers);
+      delete users.statistics;
 
-      console.log(`Checking ${gainsightUsers.length} Gainsight users from page ${page}...`);
+      if (!users || Object.keys(users).length === 0) break;
 
-      for (const gainsightUser of gainsightUsers) {
+      console.log(`Checking ${Object.keys(users).length} Gainsight users from page ${page}...`);
+      console.log(Object.values(users));
+      for(const gainsightUser of Object.values(users)) {
         try {
           console.log(`Registering new Brightstores user: ${gainsightUser.email}`);
 
@@ -106,8 +109,8 @@ const registerMissingUsers = async () => {
 };
 
 // Schedule the cron job to run every Friday at midnight
-cron.schedule('0 0 * * 5', syncGainsightPointsToBrightstores);
-// cron.schedule('*/10 * * * *', syncGainsightPointsToBrightstores);
+cron.schedule('0/5 * * * *', registerMissingUsers);
+cron.schedule('0/15 * * * *', syncGainsightPointsToBrightstores);
 
 export {
   syncGainsightPointsToBrightstores,

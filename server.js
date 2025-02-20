@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-// import './cronJobs.js';
 import routes from './src/routes/index.js'; // Ensure you use .js extension
+import './cronJobs.js';
 
 dotenv.config();
 
