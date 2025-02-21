@@ -88,6 +88,8 @@ const registerMissingUsers = async () => {
             user: {
               username: gainsightUser.username,
               email: gainsightUser.email,
+              first_name: "user",
+              last_name: page.toString(),
               active: true,
             }
           };
