@@ -1,5 +1,4 @@
 import axios from 'axios';
-import xml2js from 'xml2js';
 import config from '../config/config.js';
 
 const baseUrl = config.deposco.apiUrl;

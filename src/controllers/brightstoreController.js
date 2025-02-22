@@ -45,8 +45,10 @@ export const updateBrightstoreUsers = async (req, res) => {
 }
 
 export const getBrightOrders = async (req, res) => {
+  const { page, perPage } = req.params;
+
   try {
-    const orders = await brightstoreService.getBrightOrders();
+    const orders = await brightstoreService.getBrightOrders(page, perPage);
 
     res.status(200).json({
       status: 'success',
