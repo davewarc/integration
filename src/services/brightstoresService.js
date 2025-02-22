@@ -59,3 +59,13 @@ export const getBrightOrders = async () => {
     throw error;
   }
 }
+
+export const getBrightOrderById = async (id) => {
+  try {
+    const response = await brightstoresClient.get(`/orders/${id}?token=${brightstoresApiKey}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error of updating all users in Brightstores:', error.response?.data || error.message);
+    throw error;
+  }
+}

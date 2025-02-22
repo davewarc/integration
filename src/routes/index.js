@@ -1,6 +1,7 @@
 import express from 'express';
 import gainsightRoutes from './gainsightRoutes.js';
 import brightstoreRoutes from './brightstoreRoutes.js';
+import deposcoRoutes from './deposcoRoutes.js'
 import { syncGainsightPointsToBrightstores } from '../../cronJobs.js';
 
 const router = express.Router();
@@ -22,4 +23,6 @@ router.get('/run-cron-job', async (req, res) => {
 
 router.use('/gainsight', gainsightRoutes);
 router.use('/brightstores', brightstoreRoutes);
+router.use('/deposco', deposcoRoutes);
+
 export default router;

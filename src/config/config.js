@@ -10,12 +10,14 @@ const config = {
   },
   brightstores: {
     apiUrl: process.env.BRIGHTSTORES_API_URL,
-    apiKey: process.env.BRIGHTSTORES_API_KEY
+    apiKey: process.env.BRIGHTSTORES_API_KEY,
   },
   deposco: {
     apiUrl: process.env.DEPOSCO_API_URL,
-    apiKey: process.env.DEPOSCO_API_KEY
-  }
+    tenant: process.env.DEPOSCO_API_TENANT,
+    username: process.env.DEPOSCO_USER_NAME,
+    password: process.env.DEPOSCO_PASSWORD,
+  },
 };
 
 export default config;
