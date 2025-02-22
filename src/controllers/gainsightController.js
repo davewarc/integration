@@ -23,7 +23,7 @@ export const gainsightAuthentication = async (req, res) => {
  * @param {Response} res 
  */
 export const fetchGainsightUsers = async (req, res) => {
-  const { page, pageSize } = req.params;
+  const { page, pageSize } = req.query;
 
   try {
     const users = await gainsightService.fetchGainsightUsers(page, pageSize);
