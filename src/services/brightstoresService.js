@@ -50,9 +50,9 @@ export const deleteBrightstoreUser = async (userId) => {
   }
 }
 
-export const getBrightOrders = async () => {
+export const getBrightOrders = async (page, perPage) => {
   try {
-    const response = await brightstoresClient.get(`/orders?token=${brightstoresApiKey}`);
+    const response = await brightstoresClient.get(`/orders?token=${brightstoresApiKey}&page=${page}&per_page=${perPage}`);
     return response.data;
   } catch (error) {
     console.error('Error of updating all users in Brightstores:', error.response?.data || error.message);

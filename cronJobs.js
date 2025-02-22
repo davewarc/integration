@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import * as brightstoreService from './src/services/brightstoresService.js';
 import * as gainsightService from './src/services/gainsightService.js';
-import * as deposcoService from './deposcoService.js';
+import * as deposcoService from './src/services/deposcoService.js';
 
 const mapBrightstoreToDeposco = (order) => {
   // Convert Brightstore order to Deposco order format
@@ -101,21 +101,18 @@ const pushOrderFromBrightstoresToDeposco = async () => {
     console.log('Cron job started: Fetching orders from Brightstores...');
 
     // Fetch all Brightstore orders
-    const orders = await getBrightOrders();
-    console.log(`Fetched ${orders.length} orders from Brightstores`);
-
+    const result = await brightstoreService.getBrightOrders();
+    console.log(`Fetched ${result.orders.length} orders from Brightstores`);
     // Process each order
-    for (const order of orders) {
+    for (const order of result.orders) {
       try {
         // Get full order details by ID
-        const orderDetails = await getBrightOrderById(order.order_id);
+        const orderDetails = await brightstoreService.getBrightOrderById(order.order_id);
         console.log(`Fetched order details for order ID: ${order.order_id}`);
-
         // Map the Brightstore order details to Deposco request format
-        const deposcoOrder = mapBrightstoreToDeposco(orderDetails.order);
-
+        const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
         // Push the order to Deposco
-        const response = await createDeposcoNewOrder(deposcoOrder);
+        const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
       } catch (error) {
         console.error(`Error processing order ID ${order.order_id}:`, error.message);
@@ -134,11 +131,12 @@ cron.schedule('0 0 * * 5', () => {
 });
 
 // Schedule the cron job to run every Friday at midnight
-cron.schedule('* * * * *', () => {
+cron.schedule('0 3 * * 5', () => {
   console.log('Cron job is running for sync the points of users')
   pushOrderFromBrightstoresToDeposco();
 });
 
 export {
   syncGainsightPointsToBrightstores,
+  pushOrderFromBrightstoresToDeposco,
 };
