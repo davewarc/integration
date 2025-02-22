@@ -97,14 +97,23 @@ const syncGainsightPointsToBrightstores = async () => {
 };
 
 const pushOrderFromBrightstoresToDeposco = async () => {
+  let page = 1;
+  const perPage = 50; // Adjust as needed
+  let totalOrders = [];
+
+  while (true) {
+    const result = await brightstoreService.getBrightOrders(page, perPage);
+    if (result.orders.length === 0) break;
+    totalOrders = [...totalOrders, ...result.orders];
+    page++;
+  }
+  console.log(`Fetched ${totalOrders.length} orders from Brightstores`);
+
   try {
     console.log('Cron job started: Fetching orders from Brightstores...');
 
-    // Fetch all Brightstore orders
-    const result = await brightstoreService.getBrightOrders();
-    console.log(`Fetched ${result.orders.length} orders from Brightstores`);
     // Process each order
-    for (const order of result.orders) {
+    for (const order of totalOrders) {
       try {
         // Get full order details by ID
         const orderDetails = await brightstoreService.getBrightOrderById(order.order_id);
