@@ -120,6 +120,8 @@ const pushOrderFromBrightstoresToDeposco = async () => {
         console.log(`Fetched order details for order ID: ${order.order_id}`);
         // Map the Brightstore order details to Deposco request format
         const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
+        console.log('----------deposcoOrder------');
+        console.log(deposcoOrder);
         // Push the order to Deposco
         const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
