@@ -2,6 +2,7 @@ import * as brightstoreService from '../services/brightstoresService.js';
 
 export const getBrightstoreUsers = async (req, res) => {
   const { page, perPage } = req.query;
+  console.log(page, perPage);
   try {
     const users = await brightstoreService.getBrightstoreUsers(page, perPage);
 

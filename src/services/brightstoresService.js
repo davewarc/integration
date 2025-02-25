@@ -8,7 +8,7 @@ const brightstoresClient = createApiClient(
 
 const brightstoresApiKey = config.brightstores.apiKey;
 
-export const getBrightstoreUsers = async (page, perPage) => {
+export const getBrightstoreUsers = async (page = 1, perPage = 50) => {
   try {
     const response = await brightstoresClient.get(`/users?token=${brightstoresApiKey}&page=${page}&per_page=${perPage}`);
     return response.data;
@@ -50,7 +50,7 @@ export const deleteBrightstoreUser = async (userId) => {
   }
 }
 
-export const getBrightOrders = async (page, perPage) => {
+export const getBrightOrders = async (page = 1, perPage = 50) => {
   try {
     const response = await brightstoresClient.get(`/orders?token=${brightstoresApiKey}&page=${page}&per_page=${perPage}`);
     return response.data;
