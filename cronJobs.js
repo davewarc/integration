@@ -8,29 +8,66 @@ const mapBrightstoreToDeposco = (order) => {
   return {
     order: [
       {
-        businessUnit: 'BECM', // Adjust as needed
+        businessUnit: "BECM",
         number: `SO${order.order_id}`,
-        type: 'Sales Order',
-        status: 'New',
-        orderPriority: '10', // Adjust priority if needed
+        type: "Sales Order",
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+        orderPriority: "10",
+        orderTotal: order.grand_total,
+        createdDateTime: order.created_at,
+        updatedDateTime: order.updated_at,
         shipToAddress: {
-          name: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
-          contactName: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
-          email: order.shipping_contact.email,
-          phone: order.shipping_contact.phone,
-          addressLine1: order.shipping_address.first_address,
-          city: order.shipping_address.city,
-          stateProvinceCode: order.shipping_address.state,
-          postalCode: order.shipping_address.zip,
-          countryCode: order.shipping_address.country,
+            name: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
+            contactName: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
+            email: order.shipping_contact.email,
+            phone: order.shipping_contact.phone,
+            addressLine1: order.shipping_address.first_address,
+            addressLine2: order.shipping_address.second_address || "",
+            city: order.shipping_address.city,
+            stateProvinceCode: order.shipping_address.state,
+            postalCode: order.shipping_address.zip,
+            countryCode: order.shipping_address.country
         },
-        orderLines: order.line_items.map((item, index) => ({
-          lineNumber: (index + 1).toString(),
-          itemNumber: item.final_sku, // Assuming this is the correct item number for Deposco
-          quantity: item.quantity.toString(),
-          packKey: `${item.final_sku}--Each--${item.quantity}`,
-          unitPrice: parseFloat(item.unit_price),
-        })),
+        billToAddress: {
+            name: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
+            contactName: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
+            email: order.billing_contact.email,
+            phone: order.billing_contact.phone,
+            addressLine1: order.billing_address.first_address,
+            addressLine2: order.billing_address.second_address || "",
+            city: order.billing_address.city,
+            stateProvinceCode: order.billing_address.state,
+            postalCode: order.billing_address.zip,
+            countryCode: order.billing_address.country
+        },
+        shipVia: order.shipment?.shipping_method || "No Shipping Method",
+        orderLines: {
+            orderLine: order.line_items.map(item => ({
+                businessUnit: "BECM",
+                lineNumber: String(item.id),
+                customerLineNumber: String(item.id),
+                importReference: String(item.id),
+                lineStatus: order.status === "canceled" ? "Canceled" : "New",
+                orderPackQuantity: String(item.quantity),
+                allocatedQuantity: "0.0",
+                itemNumber: item.final_sku,
+                unitPrice: item.product_price,
+                taxCost: item.tax_price || "0.0",
+                createdDateTime: order.created_at,
+                updatedDateTime: order.updated_at,
+                pack: {
+                    type: "Each",
+                    quantity: String(item.quantity),
+                    weight: item.weight || "0.0",
+                    dimension: {
+                        length: item.dimension?.length || "0.0",
+                        width: item.dimension?.width || "0.0",
+                        height: item.dimension?.height || "0.0",
+                        units: "Inch"
+                    }
+                }
+            }))
+        }
       },
     ],
   };
@@ -103,13 +140,13 @@ const pushOrderFromBrightstoresToDeposco = async () => {
 
   while (true) {
     const result = await brightstoreService.getBrightOrders(page, perPage);
-    console.log('------result--------', result);
     if (result.orders.length === 0) break;
     totalOrders = [...totalOrders, ...result.orders];
     page++;
   }
+
   console.log(`Fetched ${totalOrders.length} orders from Brightstores`);
-  console.log(totalOrders);
+
   try {
     console.log('Cron job started: Fetching orders from Brightstores...');
 
@@ -121,8 +158,6 @@ const pushOrderFromBrightstoresToDeposco = async () => {
         console.log(`Fetched order details for order ID: ${order.order_id}`);
         // Map the Brightstore order details to Deposco request format
         const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
-        console.log('--here--------');
-        console.log(deposcoOrder);
         // Push the order to Deposco
         const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
