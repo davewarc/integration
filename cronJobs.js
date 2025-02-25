@@ -103,12 +103,13 @@ const pushOrderFromBrightstoresToDeposco = async () => {
 
   while (true) {
     const result = await brightstoreService.getBrightOrders(page, perPage);
+    console.log('------result--------', result);
     if (result.orders.length === 0) break;
     totalOrders = [...totalOrders, ...result.orders];
     page++;
   }
   console.log(`Fetched ${totalOrders.length} orders from Brightstores`);
-
+  console.log(totalOrders);
   try {
     console.log('Cron job started: Fetching orders from Brightstores...');
 
@@ -120,6 +121,8 @@ const pushOrderFromBrightstoresToDeposco = async () => {
         console.log(`Fetched order details for order ID: ${order.order_id}`);
         // Map the Brightstore order details to Deposco request format
         const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
+        console.log('--here--------');
+        console.log(deposcoOrder);
         // Push the order to Deposco
         const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
