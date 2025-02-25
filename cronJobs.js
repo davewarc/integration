@@ -122,6 +122,8 @@ const pushOrderFromBrightstoresToDeposco = async () => {
         const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
         console.log('----------deposcoOrder------');
         console.log(deposcoOrder);
+        console.log(deposcoOrder.shipToAddress);
+        console.log(deposcoOrder.orderLines);
         // Push the order to Deposco
         const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
