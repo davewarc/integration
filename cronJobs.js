@@ -9,8 +9,8 @@ const mapBrightstoreToDeposco = (order) => {
   return {
     order: [
       {
-        businessUnit: "BECM",
-        number: `SO${order.order_id}`,
+        businessUnit: "BEHR",
+        number: `SO-${order.order_id}`,
         type: "Sales Order",
         status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
         orderPriority: "10",
@@ -44,7 +44,7 @@ const mapBrightstoreToDeposco = (order) => {
         shipVia: order.shipment?.shipping_method || "No Shipping Method",
         orderLines: {
             orderLine: order.line_items.map(item => ({
-                businessUnit: "BECM",
+                businessUnit: "BEHR",
                 lineNumber: String(item.id),
                 customerLineNumber: String(item.id),
                 importReference: String(item.id),
@@ -68,7 +68,14 @@ const mapBrightstoreToDeposco = (order) => {
                     }
                 }
             }))
-        }
+        },
+        orderDiscountSubtotal: "0.0",
+        importType: "Multi",
+        deliveryConfirmation: "0",
+        shippingStatus: "0",
+        residentialDelivery: "false",
+        homeDelivery: "false",
+        insuranceRequired: "false"
       },
     ],
   };
@@ -159,10 +166,7 @@ const pushOrderFromBrightstoresToDeposco = async () => {
         console.log(`Fetched order details for order ID: ${order.order_id}`);
         // Map the Brightstore order details to Deposco request format
         const deposcoOrder = mapBrightstoreToDeposco(orderDetails);
-        console.log('----------deposcoOrder------');
-        console.log(deposcoOrder);
-        console.log(deposcoOrder.order?.[0]?.shipToAddress);
-        console.log(deposcoOrder.order?.[0]?.orderLines);
+
         // Push the order to Deposco
         const response = await deposcoService.createDeposcoNewOrder(deposcoOrder);
         console.log(`Order ID ${order.order_id} pushed to Deposco:`, response);
@@ -265,10 +269,10 @@ cron.schedule('0 3 * * 5', () => {
 });
 
 // Schedule the cron job to run every minutes
-cron.schedule('* * * * *', () => {
-  console.log('Cron job is running for sync the points of users')
-  syncNewUsersPoints();
-});
+// cron.schedule('* * * * *', () => {
+//   console.log('Cron job is running for sync the points of users')
+//   syncNewUsersPoints();
+// });
 
 export {
   syncGainsightPointsToBrightstores,
