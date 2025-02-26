@@ -205,10 +205,9 @@ const fetchAllBrightstoreUsers = async () => {
 
   while (true) {
     const response = await brightstoreService.getBrightstoreUsers(page, perPage);
+    if (!response || response.users.length === 0) break; // Stop when no more users are returned
 
-    if (!response || response.length === 0) break; // Stop when no more users are returned
-
-    allUsers = allUsers.concat(response);
+    allUsers = allUsers.concat(response.users);
     page++; // Move to the next page
   }
 
