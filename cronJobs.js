@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import fs from 'fs';
 import * as brightstoreService from './src/services/brightstoresService.js';
 import * as gainsightService from './src/services/gainsightService.js';
 import * as deposcoService from './src/services/deposcoService.js';
@@ -175,6 +176,83 @@ const pushOrderFromBrightstoresToDeposco = async () => {
   }
 }
 
+// File to track the last sync timestamp
+const LAST_SYNC_FILE = 'lastCheckedDate.txt';
+
+/* Load last checked timestamp from a file.
+ * If no file exists, assume an old date (to sync all initially).
+ */
+const getLastCheckedDate = () => {
+  try {
+    return new Date(fs.readFileSync(LAST_SYNC_FILE, 'utf8'));
+  } catch {
+    return new Date(0); // Default to epoch time if file doesn't exist
+  }
+};
+
+/* Save the current timestamp to track the last sync.
+ */
+const updateLastCheckedDate = () => {
+  const currentDate = new Date().toISOString();
+  fs.writeFileSync(LAST_SYNC_FILE, currentDate);
+};
+
+// fetch all brightstore users
+const fetchAllBrightstoreUsers = async () => {
+  let allUsers = [];
+  let page = 1;
+  const perPage = 50; // Adjust if needed
+
+  while (true) {
+    const response = await brightstoreService.getBrightstoreUsers(page, perPage);
+
+    if (!response || response.length === 0) break; // Stop when no more users are returned
+
+    allUsers = allUsers.concat(response);
+    page++; // Move to the next page
+  }
+
+  return allUsers;
+};
+
+/**
+ * Syncs new Brightstores users with their Gainsight points.
+ */
+const syncNewUsersPoints = async () => {
+  try {
+    console.log('Running cron job: Syncing new users...');
+
+    const lastCheckedDate = getLastCheckedDate();
+    const brightstoreUsers = await fetchAllBrightstoreUsers(); // Fetch all users with pagination
+
+    // Filter users by creation_date
+    const newUsers = brightstoreUsers.filter(user => new Date(user.creation_date) > lastCheckedDate);
+
+    if (newUsers.length === 0) {
+      console.log('No new users to sync.');
+      return;
+    }
+
+    // Get user IDs to fetch points from Gainsight
+    const userIds = newUsers.map(user => user.id);
+    const userPoints = await gainsightService.fetchGainsightPointsByUserIds(userIds);
+
+    // Update Brightstores users with their respective points
+    for (const user of newUsers) {
+      const points = userPoints.find(p => p.userId === user.id)?.points || 0;
+      await brightstoreService.updateBrightstoreUsers(user.id, points);
+      console.log(`Updated user ${user.id} with ${points} points`);
+    }
+
+    // Update last checked timestamp
+    updateLastCheckedDate();
+
+    console.log('Sync completed successfully.');
+  } catch (error) {
+    console.error('Error in syncing users:', error.message);
+  }
+};
+
 // Schedule the cron job to run every Friday at midnight
 cron.schedule('0 0 * * 5', () => {
   console.log('Cron job is running for sync the points of users')
@@ -187,7 +265,14 @@ cron.schedule('0 3 * * 5', () => {
   pushOrderFromBrightstoresToDeposco();
 });
 
+// Schedule the cron job to run every minutes
+cron.schedule('* * * * *', () => {
+  console.log('Cron job is running for sync the points of users')
+  syncNewUsersPoints();
+});
+
 export {
   syncGainsightPointsToBrightstores,
   pushOrderFromBrightstoresToDeposco,
+  syncNewUsersPoints,
 };
