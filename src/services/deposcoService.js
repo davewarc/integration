@@ -9,7 +9,7 @@ export const createDeposcoNewOrder = async (data) => {
 
   try {
     const response = await axios.post(
-      `${baseUrl}/${tenant}/orders/updates`,
+      `${baseUrl}/${tenant}/orders`,
       data,
       {
         headers: {
