@@ -4,6 +4,64 @@ import * as brightstoreService from './src/services/brightstoresService.js';
 import * as gainsightService from './src/services/gainsightService.js';
 import * as deposcoService from './src/services/deposcoService.js';
 
+const pointsFilePath = './userPoints.json';
+
+// Function to save user points into JSON file
+const saveUserPoints = async (brightstoreUserId, points) => {
+  try {
+    // Load existing data from JSON
+    const data = await fs.promises.readFile(pointsFilePath, 'utf-8');
+    const jsonData = JSON.parse(data);
+
+    // Find if the user already exists
+    const existingUser = jsonData.users.find(user => user.brightstoreUserId === brightstoreUserId);
+    if (existingUser) {
+      existingUser.points = points;
+      existingUser.recordedAt = new Date().toISOString();
+    } else {
+      jsonData.users.push({
+        brightstoreUserId,
+        points,
+        recordedAt: new Date().toISOString(),
+      });
+    }
+
+    // Save the updated data back to JSON
+    await fs.promises.writeFile(pointsFilePath, JSON.stringify(jsonData, null, 2));
+    console.log(`User points for ${brightstoreUserId} saved successfully.`);
+  } catch (error) {
+    console.error('Error saving user points:', error.message);
+  }
+};
+
+// Function to get last Friday’s points for a user
+const getLastFridayPoints = async (brightstoreUserId) => {
+  try {
+    // Load the existing data from JSON
+    const data = await fs.promises.readFile(pointsFilePath, 'utf-8');
+    const jsonData = JSON.parse(data);
+
+    // Calculate the most recent Friday date
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const diffToFriday = dayOfWeek === 0 ? 2 : (dayOfWeek === 1 ? 3 : (dayOfWeek === 2 ? 4 : (dayOfWeek === 3 ? 5 : (dayOfWeek === 4 ? 6 : (dayOfWeek === 5 ? 0 : 1)))));
+    today.setDate(today.getDate() - diffToFriday);
+    today.setHours(0, 0, 0, 0); // Set the time to the start of the day
+
+    // Find user points from the most recent Friday
+    const userPoints = jsonData.users.filter(user => user.brightstoreUserId === brightstoreUserId && new Date(user.recordedAt) <= today);
+
+    if (userPoints.length > 0) {
+      return userPoints.sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))[0].points;
+    } else {
+      console.warn(`No points found for user ${brightstoreUserId}`);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting last Friday points:', error.message);
+  }
+};
+
 const mapBrightstoreToDeposco = (order) => {
   // Convert Brightstore order to Deposco order format
   return {
@@ -18,56 +76,56 @@ const mapBrightstoreToDeposco = (order) => {
         createdDateTime: order.created_at,
         updatedDateTime: order.updated_at,
         shipToAddress: {
-            name: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
-            contactName: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
-            email: order.shipping_contact.email,
-            phone: order.shipping_contact.phone,
-            addressLine1: order.shipping_address.first_address,
-            addressLine2: order.shipping_address.second_address || "",
-            city: order.shipping_address.city,
-            stateProvinceCode: order.shipping_address.state,
-            postalCode: order.shipping_address.zip,
-            countryCode: order.shipping_address.country
+          name: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
+          contactName: `${order.shipping_contact.first_name} ${order.shipping_contact.last_name}`,
+          email: order.shipping_contact.email,
+          phone: order.shipping_contact.phone,
+          addressLine1: order.shipping_address.first_address,
+          addressLine2: order.shipping_address.second_address || "",
+          city: order.shipping_address.city,
+          stateProvinceCode: order.shipping_address.state,
+          postalCode: order.shipping_address.zip,
+          countryCode: order.shipping_address.country
         },
         billToAddress: {
-            name: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
-            contactName: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
-            email: order.billing_contact.email,
-            phone: order.billing_contact.phone,
-            addressLine1: order.billing_address.first_address,
-            addressLine2: order.billing_address.second_address || "",
-            city: order.billing_address.city,
-            stateProvinceCode: order.billing_address.state,
-            postalCode: order.billing_address.zip,
-            countryCode: order.billing_address.country
+          name: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
+          contactName: `${order.billing_contact.first_name} ${order.billing_contact.last_name}`,
+          email: order.billing_contact.email,
+          phone: order.billing_contact.phone,
+          addressLine1: order.billing_address.first_address,
+          addressLine2: order.billing_address.second_address || "",
+          city: order.billing_address.city,
+          stateProvinceCode: order.billing_address.state,
+          postalCode: order.billing_address.zip,
+          countryCode: order.billing_address.country
         },
         shipVia: order.shipment?.shipping_method || "No Shipping Method",
         orderLines: {
-            orderLine: order.line_items.map(item => ({
-                businessUnit: "BECM",
-                lineNumber: String(item.id),
-                customerLineNumber: String(item.id),
-                importReference: String(item.id),
-                lineStatus: order.status === "canceled" ? "Canceled" : "New",
-                orderPackQuantity: String(item.quantity),
-                allocatedQuantity: "0.0",
-                itemNumber: item.final_sku,
-                unitPrice: item.product_price,
-                taxCost: item.tax_price || "0.0",
-                createdDateTime: order.created_at,
-                updatedDateTime: order.updated_at,
-                pack: {
-                    type: "Each",
-                    quantity: String(item.quantity),
-                    weight: item.weight || "0.0",
-                    dimension: {
-                        length: item.dimension?.length || "0.0",
-                        width: item.dimension?.width || "0.0",
-                        height: item.dimension?.height || "0.0",
-                        units: "Inch"
-                    }
-                }
-            }))
+          orderLine: order.line_items.map(item => ({
+            businessUnit: "BECM",
+            lineNumber: String(item.id),
+            customerLineNumber: String(item.id),
+            importReference: String(item.id),
+            lineStatus: order.status === "canceled" ? "Canceled" : "New",
+            orderPackQuantity: String(item.quantity),
+            allocatedQuantity: "0.0",
+            itemNumber: item.final_sku,
+            unitPrice: item.product_price,
+            taxCost: item.tax_price || "0.0",
+            createdDateTime: order.created_at,
+            updatedDateTime: order.updated_at,
+            pack: {
+              type: "Each",
+              quantity: String(item.quantity),
+              weight: item.weight || "0.0",
+              dimension: {
+                length: item.dimension?.length || "0.0",
+                width: item.dimension?.width || "0.0",
+                height: item.dimension?.height || "0.0",
+                units: "Inch"
+              }
+            }
+          }))
         },
         orderDiscountSubtotal: "0.0",
         importType: "Multi",
@@ -83,14 +141,10 @@ const mapBrightstoreToDeposco = (order) => {
 
 const syncGainsightPointsToBrightstores = async () => {
   let page = 1;
-  const perPage = 50; // Adjust per page size if needed
+  const perPage = 50;
   let hasMorePages = true;
-
-  console.log('Starting Gainsight to Brightstores sync job...');
-
   try {
     while (hasMorePages) {
-      // Step 1: Fetch Brightstores users (paginate)
       const brightstoreUsers = await brightstoreService.getBrightstoreUsers(page, perPage);
       if (!brightstoreUsers?.users || brightstoreUsers?.users?.length === 0) {
         console.log(`No users found on page ${page}. Ending job.`);
@@ -104,33 +158,43 @@ const syncGainsightPointsToBrightstores = async () => {
         const { email, id: brightstoreUserId } = brightUser;
 
         try {
-          // Step 2: Find Gainsight user by email
+          // Find Gainsight user by email
           const gainsightUser = await gainsightService.fetchUserByFieldValue('email', email);
-
           if (!gainsightUser) {
             console.warn(`No Gainsight user found for email: ${email}`);
             continue;
           }
 
-          // Step 3: Fetch Gainsight user's points
+          // Fetch Gainsight user’s current points
           const gainsightPoints = await gainsightService.fetchGainsightPointsByUserIds([gainsightUser.userid]);
-
           if (!gainsightPoints || gainsightPoints.length === 0) {
             console.warn(`No points found for Gainsight user with email: ${email}`);
             continue;
           }
 
-          const userPoints = gainsightPoints[0].points; // Adjust based on API response structure
+          const userPoints = gainsightPoints[0].points; // Get current points
 
-          // Step 4: Update Brightstores user balance
-          await brightstoreService.updateBrightstoreUsers(brightstoreUserId, userPoints);
-          console.log(`Updated Brightstores user ${brightstoreUserId} with ${userPoints} points.`);
+          // Save current points
+          await saveUserPoints(brightstoreUserId, userPoints);
+
+          // Get points from last Friday
+          const lastFridayPoints = await getLastFridayPoints(brightstoreUserId);
+
+          if (lastFridayPoints !== null) {
+            // Compare and calculate the difference
+            const pointsDifference = userPoints - lastFridayPoints;
+            if (pointsDifference > 0) {
+              console.log(`Points increased for user ${brightstoreUserId}: ${pointsDifference}`);
+              // Add points difference to Brightstores (Update Brightstores balance)
+              await brightstoreService.updateBrightstoreUsers(brightstoreUserId, pointsDifference);
+            }
+          }
         } catch (error) {
           console.error(`Error processing user ${email}:`, error.message);
         }
       }
 
-      // Step 5: Move to the next page
+      // Move to the next page
       page++;
       console.log(`Moving to Brightstores page ${page}...`);
     }
