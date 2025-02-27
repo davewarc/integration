@@ -9,7 +9,7 @@ const mapBrightstoreToDeposco = (order) => {
   return {
     order: [
       {
-        businessUnit: "BEHR",
+        businessUnit: "BECM",
         number: `SO-${order.order_id}`,
         type: "Sales Order",
         status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
@@ -44,7 +44,7 @@ const mapBrightstoreToDeposco = (order) => {
         shipVia: order.shipment?.shipping_method || "No Shipping Method",
         orderLines: {
             orderLine: order.line_items.map(item => ({
-                businessUnit: "BEHR",
+                businessUnit: "BECM",
                 lineNumber: String(item.id),
                 customerLineNumber: String(item.id),
                 importReference: String(item.id),
