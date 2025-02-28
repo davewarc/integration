@@ -1,15 +1,29 @@
 import cron from 'node-cron';
 import fs from 'fs';
+import path from 'path';
+
 import * as brightstoreService from './src/services/brightstoresService.js';
 import * as gainsightService from './src/services/gainsightService.js';
 import * as deposcoService from './src/services/deposcoService.js';
 
 const pointsFilePath = './userPoints.json';
 
+const ensureFileExists = async () => {
+  try {
+    if (!fs.existsSync(pointsFilePath)) {
+      // If file doesn't exist, create a new one with an empty structure
+      await fs.promises.writeFile(pointsFilePath, JSON.stringify({ users: [] }, null, 2));
+      console.log('File not found. Created new userPoints.json file.');
+    }
+  } catch (error) {
+    console.error('Error checking/creating file:', error.message);
+  }
+};
+
 // Function to save user points into JSON file
 const saveUserPoints = async (brightstoreUserId, points) => {
+  await ensureFileExists();
   try {
-    // Load existing data from JSON
     const data = await fs.promises.readFile(pointsFilePath, 'utf-8');
     const jsonData = JSON.parse(data);
 
@@ -17,16 +31,13 @@ const saveUserPoints = async (brightstoreUserId, points) => {
     const existingUser = jsonData.users.find(user => user.brightstoreUserId === brightstoreUserId);
     if (existingUser) {
       existingUser.points = points;
-      existingUser.recordedAt = new Date().toISOString();
     } else {
       jsonData.users.push({
         brightstoreUserId,
         points,
-        recordedAt: new Date().toISOString(),
       });
     }
-
-    // Save the updated data back to JSON
+    // Save the updated data back to the file
     await fs.promises.writeFile(pointsFilePath, JSON.stringify(jsonData, null, 2));
     console.log(`User points for ${brightstoreUserId} saved successfully.`);
   } catch (error) {
@@ -34,28 +45,19 @@ const saveUserPoints = async (brightstoreUserId, points) => {
   }
 };
 
-// Function to get last Friday’s points for a user
-const getLastFridayPoints = async (brightstoreUserId) => {
+const getLastFridayPoints = async (brightstoreUserId, points) => {
+  await ensureFileExists();
   try {
-    // Load the existing data from JSON
     const data = await fs.promises.readFile(pointsFilePath, 'utf-8');
-    const jsonData = JSON.parse(data);
-
-    // Calculate the most recent Friday date
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diffToFriday = dayOfWeek === 0 ? 2 : (dayOfWeek === 1 ? 3 : (dayOfWeek === 2 ? 4 : (dayOfWeek === 3 ? 5 : (dayOfWeek === 4 ? 6 : (dayOfWeek === 5 ? 0 : 1)))));
-    today.setDate(today.getDate() - diffToFriday);
-    today.setHours(0, 0, 0, 0); // Set the time to the start of the day
-
-    // Find user points from the most recent Friday
-    const userPoints = jsonData.users.filter(user => user.brightstoreUserId === brightstoreUserId && new Date(user.recordedAt) <= today);
-
+    const jsonData = JSON.parse(data); // Parse the data
+    const userPoints = jsonData?.users?.filter(user => user.brightstoreUserId === brightstoreUserId);
     if (userPoints.length > 0) {
-      return userPoints.sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))[0].points;
+      return userPoints[0].points;
     } else {
+      // Save current points
+      await saveUserPoints(brightstoreUserId, points);
       console.warn(`No points found for user ${brightstoreUserId}`);
-      return null;
+      return 0;
     }
   } catch (error) {
     console.error('Error getting last Friday points:', error.message);
@@ -144,6 +146,7 @@ const syncGainsightPointsToBrightstores = async () => {
   const perPage = 50;
   let hasMorePages = true;
   try {
+    await ensureFileExists();
     while (hasMorePages) {
       const brightstoreUsers = await brightstoreService.getBrightstoreUsers(page, perPage);
       if (!brightstoreUsers?.users || brightstoreUsers?.users?.length === 0) {
@@ -155,7 +158,7 @@ const syncGainsightPointsToBrightstores = async () => {
 
       const { users } = brightstoreUsers;
       for (const brightUser of users) {
-        const { email, id: brightstoreUserId } = brightUser;
+        const { email, id: brightstoreUserId, balance } = brightUser;
 
         try {
           // Find Gainsight user by email
@@ -174,19 +177,15 @@ const syncGainsightPointsToBrightstores = async () => {
 
           const userPoints = gainsightPoints[0].points; // Get current points
 
-          // Save current points
-          await saveUserPoints(brightstoreUserId, userPoints);
-
           // Get points from last Friday
-          const lastFridayPoints = await getLastFridayPoints(brightstoreUserId);
-
+          const lastFridayPoints = await getLastFridayPoints(brightstoreUserId, userPoints);
           if (lastFridayPoints !== null) {
             // Compare and calculate the difference
             const pointsDifference = userPoints - lastFridayPoints;
             if (pointsDifference > 0) {
               console.log(`Points increased for user ${brightstoreUserId}: ${pointsDifference}`);
               // Add points difference to Brightstores (Update Brightstores balance)
-              await brightstoreService.updateBrightstoreUsers(brightstoreUserId, pointsDifference);
+              await brightstoreService.updateBrightstoreUsers(brightstoreUserId, pointsDifference + balance);
             }
           }
         } catch (error) {
