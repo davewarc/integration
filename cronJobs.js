@@ -184,7 +184,7 @@ const syncGainsightPointsToBrightstores = async () => {
             if (pointsDifference > 0) {
               console.log(`Points increased for user ${brightstoreUserId}: ${pointsDifference}`);
               // Add points difference to Brightstores (Update Brightstores balance)
-              await brightstoreService.updateBrightstoreUsers(brightstoreUserId, pointsDifference + balance);
+              await brightstoreService.updateBrightstoreUsers(brightstoreUserId, pointsDifference + Number(balance));
             }
           }
         } catch (error) {
