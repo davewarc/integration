@@ -1,6 +1,5 @@
 import cron from 'node-cron';
 import fs from 'fs';
-import path from 'path';
 
 import * as brightstoreService from './src/services/brightstoresService.js';
 import * as gainsightService from './src/services/gainsightService.js';
@@ -287,6 +286,7 @@ const fetchAllBrightstoreUsers = async () => {
 const syncNewUsersPoints = async () => {
   try {
     console.log('Running cron job: Syncing new users...');
+    await ensureFileExists();
 
     const lastCheckedDate = getLastCheckedDate();
     const brightstoreUsers = await fetchAllBrightstoreUsers(); // Fetch all users with pagination
@@ -307,6 +307,9 @@ const syncNewUsersPoints = async () => {
     for (const user of newUsers) {
       const points = userPoints.find(p => p.userId === user.id)?.points || 0;
       await brightstoreService.updateBrightstoreUsers(user.id, points);
+
+      // Add userId and points to JSON file
+      await saveUserPoints(user.id, points);
       console.log(`Updated user ${user.id} with ${points} points`);
     }
 
@@ -332,10 +335,10 @@ cron.schedule('0 3 * * 5', () => {
 });
 
 // Schedule the cron job to run every minutes
-// cron.schedule('* * * * *', () => {
-//   console.log('Cron job is running for sync the points of users')
-//   syncNewUsersPoints();
-// });
+cron.schedule('* * * * *', () => {
+  console.log('Cron job is running for sync the points of users')
+  syncNewUsersPoints();
+});
 
 export {
   syncGainsightPointsToBrightstores,
