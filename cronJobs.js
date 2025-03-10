@@ -299,17 +299,39 @@ const syncNewUsersPoints = async () => {
       return;
     }
 
-    // Get user IDs to fetch points from Gainsight
-    const userIds = newUsers.map(user => user.id);
-    const userPoints = await gainsightService.fetchGainsightPointsByUserIds(userIds);
+    // Get user IDs by mapping emails to API calls
+    const userIds = await Promise.all(
+      newUsers.map(async (user) => {
+        try {
+          const userData = await gainsightService.fetchUserByFieldValue('email', user.email);
+          return userData?.userid || null; // Return user ID if found, otherwise null
+        } catch (error) {
+          console.error(`Error fetching user ID for email ${user.email}:, error.message`);
+          return null;
+        }
+      })
+    );
+
+    const validUsers = newUsers.filter((_, index) => userIds[index] !== null);
+    const validUserIds = userIds.filter(id => id !== null);
+
+    if (validUsers.length === 0) {
+      console.log('No valid users found in Gainsight.');
+      return;
+    }
+
+    // Remove null values (users that were not found in Gainsight)
+    const userPoints = await gainsightService.fetchGainsightPointsByUserIds(validUserIds);
 
     // Update Brightstores users with their respective points
-    for (const user of newUsers) {
-      const points = userPoints.find(p => p.userId === user.id)?.points || 0;
-      await brightstoreService.updateBrightstoreUsers(user.id, points);
+    for (let i = 0; i < validUsers.length; i++) {
+      const user = validUsers[i];
+      const userId = validUserIds[i];
+      const points = userPoints.find(p => p.userId === userId)?.points || 0;
 
-      // Add userId and points to JSON file
+      await brightstoreService.updateBrightstoreUsers(user.id, points);
       await saveUserPoints(user.id, points);
+
       console.log(`Updated user ${user.id} with ${points} points`);
     }
 
